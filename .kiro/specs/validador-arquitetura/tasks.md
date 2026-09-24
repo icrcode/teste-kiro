@@ -8,11 +8,11 @@
 
 ## Fase 2 — Relatório e CLI
 - [x] Implementar `gerar_relatorio()` gravando JSON em `saida/`
-- [-] Criar interface CLI: `python validador.py <caminho_yaml>`
-- [~] Adicionar flag `--strict` para tratar avisos como erros
+- [x] Criar interface CLI: `python validador.py <caminho_yaml>`
+- [x] Adicionar flag `--strict` para tratar avisos como erros
 
 ## Fase 3 — Testes
-- [~] Escrever testes para schema inválido
-- [~] Escrever testes para serviço AWS desconhecido
-- [~] Escrever testes para conexão com ID inexistente
-- [~] Escrever teste de arquitetura válida completa (caso previsao-matriculas)
+- [x] Escrever testes para schema inválido
+- [x] Escrever testes para serviço AWS desconhecido
+- [x] Escrever testes para conexão com ID inexistente
+- [x] Escrever teste de arquitetura válida completa (caso previsao-matriculas)

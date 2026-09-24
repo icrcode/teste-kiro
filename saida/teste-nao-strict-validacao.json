@@ -1,9 +1,9 @@
 {
-  "caso": "teste-strict",
-  "status": "invalido",
-  "erros": [
+  "caso": "teste-nao-strict",
+  "status": "valido",
+  "erros": [],
+  "avisos": [
     "componentes[0] (id='x'): serviço AWS 'ServicoFake' não está na lista de suportados. Verifique o nome ou adicione ao validador."
   ],
-  "avisos": [],
-  "timestamp": "2026-09-24T17:09:01.011285+00:00"
+  "timestamp": "2026-09-24T17:09:01.036613+00:00"
 }

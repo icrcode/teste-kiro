@@ -3,7 +3,7 @@
   "status": "valido",
   "erros": [],
   "avisos": [
-    "Ciclo detectado nas conexões: sagemaker_training → sagemaker_endpoint → sagemaker_monitor → cloudwatch_metrics → eventbridge_scheduler → sagemaker_training. Loops de feedback são válidos em pipelines ML, mas verifique se é intencional."
+    "Ciclo detectado nas conexões: sagemaker_endpoint → sagemaker_monitor → cloudwatch_metrics → eventbridge_scheduler → sagemaker_training → sagemaker_endpoint. Loops de feedback são válidos em pipelines ML, mas verifique se é intencional."
   ],
-  "timestamp": "2026-09-24T16:58:32.782327+00:00"
+  "timestamp": "2026-09-24T17:09:01.000766+00:00"
 }

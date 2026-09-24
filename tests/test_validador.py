@@ -56,6 +56,44 @@ def yaml_caso_real_path():
 
 
 # ---------------------------------------------------------------------------
+# Testes: carregar_yaml — YAML inválido / não-dicionário
+# ---------------------------------------------------------------------------
+
+class TestCarregarYaml:
+    def test_yaml_malformado_retorna_erro(self, tmp_path):
+        """YAML com sintaxe inválida deve retornar mensagem de erro (não lançar exceção)."""
+        caminho = tmp_path / "malformado.yaml"
+        caminho.write_text("chave: [sem fechar\n", encoding="utf-8")
+        dados, erro = carregar_yaml(str(caminho))
+        assert dados is None
+        assert erro is not None
+        assert "YAML" in erro or "parsing" in erro.lower() or "erro" in erro.lower()
+
+    def test_yaml_raiz_lista_retorna_erro(self, tmp_path):
+        """YAML válido mas com lista na raiz (não dicionário) deve retornar erro."""
+        caminho = tmp_path / "lista.yaml"
+        caminho.write_text("- item1\n- item2\n", encoding="utf-8")
+        dados, erro = carregar_yaml(str(caminho))
+        assert dados is None
+        assert erro is not None
+        assert "mapeamento" in erro or "dicionário" in erro or "dict" in erro.lower()
+
+    def test_yaml_valido_retorna_dados_sem_erro(self, tmp_path):
+        """YAML válido com dicionário na raiz retorna dados e erro None."""
+        caminho = tmp_path / "ok.yaml"
+        caminho.write_text("caso: teste\n", encoding="utf-8")
+        dados, erro = carregar_yaml(str(caminho))
+        assert dados == {"caso": "teste"}
+        assert erro is None
+
+    def test_arquivo_inexistente_retorna_erro(self, tmp_path):
+        dados, erro = carregar_yaml(str(tmp_path / "nao_existe.yaml"))
+        assert dados is None
+        assert erro is not None
+        assert "não encontrado" in erro or "not found" in erro.lower()
+
+
+# ---------------------------------------------------------------------------
 # Testes: validar_schema
 # ---------------------------------------------------------------------------
 
@@ -73,9 +111,30 @@ class TestValidarSchema:
         erros = validar_schema(arquitetura_valida)
         assert any("componentes" in e for e in erros)
 
+    def test_campo_descricao_ausente(self, arquitetura_valida):
+        del arquitetura_valida["descricao"]
+        erros = validar_schema(arquitetura_valida)
+        assert any("descricao" in e for e in erros)
+
+    def test_campo_conexoes_ausente(self, arquitetura_valida):
+        del arquitetura_valida["conexoes"]
+        erros = validar_schema(arquitetura_valida)
+        assert any("conexoes" in e for e in erros)
+
     def test_todos_campos_ausentes(self):
         erros = validar_schema({})
         assert len(erros) == 4  # caso, descricao, componentes, conexoes
+
+    def test_mensagem_erro_contem_nome_do_campo(self):
+        """RNF-02: mensagens de erro identificam claramente o campo ausente."""
+        for campo in ["caso", "descricao", "componentes", "conexoes"]:
+            erros = validar_schema({campo: "presente"})
+            # Os outros 3 campos estão ausentes; cada mensagem deve conter seu nome
+            ausentes = {"caso", "descricao", "componentes", "conexoes"} - {campo}
+            for ausente in ausentes:
+                assert any(ausente in e for e in erros), (
+                    f"Mensagem de erro não menciona o campo ausente '{ausente}'"
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -99,10 +158,78 @@ class TestValidarComponentes:
         erros, _, _ = validar_componentes(arquitetura_valida)
         assert any("duplicado" in e for e in erros)
 
-    def test_campo_obrigatorio_ausente(self, arquitetura_valida):
+    def test_campo_id_ausente(self, arquitetura_valida):
+        del arquitetura_valida["componentes"][0]["id"]
+        erros, _, _ = validar_componentes(arquitetura_valida)
+        assert any("id" in e for e in erros)
+
+    def test_campo_tipo_ausente(self, arquitetura_valida):
+        del arquitetura_valida["componentes"][0]["tipo"]
+        erros, _, _ = validar_componentes(arquitetura_valida)
+        assert any("tipo" in e for e in erros)
+
+    def test_campo_nome_ausente(self, arquitetura_valida):
         del arquitetura_valida["componentes"][0]["nome"]
         erros, _, _ = validar_componentes(arquitetura_valida)
         assert any("nome" in e for e in erros)
+
+    def test_todos_campos_componente_ausentes(self, arquitetura_valida):
+        """Componente vazio gera erros para id, tipo e nome."""
+        arquitetura_valida["componentes"][0] = {}
+        erros, _, _ = validar_componentes(arquitetura_valida)
+        for campo in ("id", "tipo", "nome"):
+            assert any(campo in e for e in erros), (
+                f"Mensagem de erro não menciona o campo ausente '{campo}'"
+            )
+
+    def test_mensagem_erro_componente_contem_nome_do_campo(self, arquitetura_valida):
+        """RNF-02: mensagem de erro do componente identifica o campo ausente."""
+        del arquitetura_valida["componentes"][0]["tipo"]
+        erros, _, _ = validar_componentes(arquitetura_valida)
+        assert any("tipo" in e for e in erros)
+
+    def test_aviso_servico_desconhecido_contem_nome_do_servico(self, arquitetura_valida):
+        """RNF-02: aviso para serviço desconhecido deve incluir o nome do serviço."""
+        arquitetura_valida["componentes"][0]["tipo"] = "ServicoFalso"
+        _, avisos, _ = validar_componentes(arquitetura_valida)
+        assert any("ServicoFalso" in a for a in avisos)
+
+    def test_aviso_servico_desconhecido_sugere_correcao(self, arquitetura_valida):
+        """RF-02 / Critério: aviso deve sugerir correção ao usuário."""
+        arquitetura_valida["componentes"][0]["tipo"] = "DynamoDB"
+        _, avisos, _ = validar_componentes(arquitetura_valida)
+        # A mensagem deve orientar o usuário a verificar ou corrigir
+        assert any(
+            "verifique" in a.lower() or "adicione" in a.lower() or "suportado" in a.lower()
+            for a in avisos
+        )
+
+    @pytest.mark.parametrize("servico", [
+        "S3", "Glue", "SageMaker", "Lambda", "RDS",
+        "Aurora", "EMR", "CloudWatch", "EventBridge", "QuickSight",
+    ])
+    def test_todos_servicos_suportados_sem_aviso(self, arquitetura_valida, servico):
+        """RF-02: todos os 10 serviços AWS suportados não devem gerar avisos."""
+        arquitetura_valida["componentes"][0]["tipo"] = servico
+        erros, avisos, _ = validar_componentes(arquitetura_valida)
+        assert erros == []
+        assert not any(servico in a for a in avisos), (
+            f"Serviço suportado '{servico}' gerou aviso inesperado."
+        )
+
+    def test_servico_case_sensitive_minusculo_gera_aviso(self, arquitetura_valida):
+        """RF-02: verificação é case-sensitive — 's3' não é igual a 'S3'."""
+        arquitetura_valida["componentes"][0]["tipo"] = "s3"
+        _, avisos, _ = validar_componentes(arquitetura_valida)
+        assert any("s3" in a for a in avisos), (
+            "Serviço 's3' (minúsculo) deveria gerar aviso pois a checagem é case-sensitive."
+        )
+
+    def test_servico_case_sensitive_parcial_gera_aviso(self, arquitetura_valida):
+        """RF-02: variantes de capitalização como 'sagemaker' geram aviso."""
+        arquitetura_valida["componentes"][0]["tipo"] = "sagemaker"
+        _, avisos, _ = validar_componentes(arquitetura_valida)
+        assert any("sagemaker" in a for a in avisos)
 
 
 # ---------------------------------------------------------------------------
@@ -174,6 +301,72 @@ class TestValidarConexoes:
         erros, avisos = validar_conexoes(dados, ids)
         assert not any("Ciclo" in a for a in avisos)
         assert erros == []
+
+    def test_origem_e_destino_inexistentes_geram_dois_erros(self, arquitetura_valida):
+        """Quando tanto origem quanto destino referenciam IDs inexistentes, dois erros são retornados."""
+        arquitetura_valida["conexoes"][0]["origem"] = "id_falso_origem"
+        arquitetura_valida["conexoes"][0]["destino"] = "id_falso_destino"
+        ids = {"s3_raw", "glue_etl"}
+        erros, _ = validar_conexoes(arquitetura_valida, ids)
+        assert len([e for e in erros if "origem" in e or "destino" in e]) >= 2
+
+    def test_mensagem_erro_origem_contem_id_desconhecido(self, arquitetura_valida):
+        """RNF-02: mensagem de erro para origem inexistente deve conter o ID desconhecido."""
+        arquitetura_valida["conexoes"][0]["origem"] = "id_nao_cadastrado"
+        ids = {"s3_raw", "glue_etl"}
+        erros, _ = validar_conexoes(arquitetura_valida, ids)
+        assert any("id_nao_cadastrado" in e for e in erros), (
+            "Mensagem de erro deve conter o ID referenciado que não existe."
+        )
+
+    def test_mensagem_erro_destino_contem_id_desconhecido(self, arquitetura_valida):
+        """RNF-02: mensagem de erro para destino inexistente deve conter o ID desconhecido."""
+        arquitetura_valida["conexoes"][0]["destino"] = "id_nao_cadastrado"
+        ids = {"s3_raw", "glue_etl"}
+        erros, _ = validar_conexoes(arquitetura_valida, ids)
+        assert any("id_nao_cadastrado" in e for e in erros), (
+            "Mensagem de erro deve conter o ID referenciado que não existe."
+        )
+
+    def test_campo_origem_ausente_gera_erro(self, arquitetura_valida):
+        """Campo 'origem' ausente na conexão deve gerar erro bloqueante."""
+        del arquitetura_valida["conexoes"][0]["origem"]
+        ids = {"s3_raw", "glue_etl"}
+        erros, _ = validar_conexoes(arquitetura_valida, ids)
+        assert any("origem" in e for e in erros)
+
+    def test_campo_destino_ausente_gera_erro(self, arquitetura_valida):
+        """Campo 'destino' ausente na conexão deve gerar erro bloqueante."""
+        del arquitetura_valida["conexoes"][0]["destino"]
+        ids = {"s3_raw", "glue_etl"}
+        erros, _ = validar_conexoes(arquitetura_valida, ids)
+        assert any("destino" in e for e in erros)
+
+
+# ---------------------------------------------------------------------------
+# Testes: integração — conexão com ID inexistente via validar()
+# ---------------------------------------------------------------------------
+
+class TestValidarConexoesIntegracao:
+    def test_conexao_origem_inexistente_retorna_status_invalido(self, tmp_path):
+        """RF-03 / Critério: conexão com ID inexistente deve retornar status invalido."""
+        arq = {
+            "caso": "teste-conn-invalida",
+            "descricao": "teste",
+            "componentes": [
+                {"id": "s3_raw", "tipo": "S3", "nome": "Bucket Raw"},
+                {"id": "glue_etl", "tipo": "Glue", "nome": "ETL Job"},
+            ],
+            "conexoes": [
+                {"origem": "id_que_nao_existe", "destino": "glue_etl"},
+            ],
+        }
+        import yaml as _yaml
+        caminho = tmp_path / "conn_invalida.yaml"
+        caminho.write_text(_yaml.dump(arq, allow_unicode=True))
+        relatorio = validar(str(caminho))
+        assert relatorio["status"] == "invalido"
+        assert any("id_que_nao_existe" in e for e in relatorio["erros"])
 
 
 # ---------------------------------------------------------------------------
@@ -272,3 +465,57 @@ class TestIntegracao:
         caminho.write_text(yaml.dump(arq, allow_unicode=True))
         relatorio = validar(str(caminho), strict=True)
         assert relatorio["status"] == "invalido"
+
+    def test_strict_mode_avisos_movidos_para_erros(self, tmp_path):
+        """Em strict mode, avisos são movidos para erros e avisos fica vazio."""
+        arq = {
+            "caso": "teste-strict-avisos",
+            "descricao": "teste",
+            "componentes": [
+                {"id": "x", "tipo": "ServicoFake", "nome": "Fake"},
+            ],
+            "conexoes": [],
+        }
+        caminho = tmp_path / "strict2.yaml"
+        caminho.write_text(yaml.dump(arq, allow_unicode=True))
+        relatorio = validar(str(caminho), strict=True)
+        assert relatorio["avisos"] == []
+        assert any("ServicoFake" in e for e in relatorio["erros"])
+
+    def test_sem_strict_mode_avisos_permanecem_como_avisos(self, tmp_path):
+        """Sem strict mode, serviço desconhecido gera aviso (não erro) e status é válido."""
+        arq = {
+            "caso": "teste-nao-strict",
+            "descricao": "teste",
+            "componentes": [
+                {"id": "x", "tipo": "ServicoFake", "nome": "Fake"},
+            ],
+            "conexoes": [],
+        }
+        caminho = tmp_path / "nao_strict.yaml"
+        caminho.write_text(yaml.dump(arq, allow_unicode=True))
+        relatorio = validar(str(caminho), strict=False)
+        assert relatorio["status"] == "valido"
+        assert relatorio["erros"] == []
+        assert any("ServicoFake" in a for a in relatorio["avisos"])
+
+    def test_strict_mode_ciclo_vira_erro(self, tmp_path):
+        """Em strict mode, ciclo detectado (aviso) deve tornar o relatório inválido."""
+        arq = {
+            "caso": "teste-strict-ciclo",
+            "descricao": "teste",
+            "componentes": [
+                {"id": "A", "tipo": "S3", "nome": "Bucket A"},
+                {"id": "B", "tipo": "Glue", "nome": "ETL B"},
+            ],
+            "conexoes": [
+                {"origem": "A", "destino": "B"},
+                {"origem": "B", "destino": "A"},
+            ],
+        }
+        caminho = tmp_path / "strict_ciclo.yaml"
+        caminho.write_text(yaml.dump(arq, allow_unicode=True))
+        relatorio = validar(str(caminho), strict=True)
+        assert relatorio["status"] == "invalido"
+        assert relatorio["avisos"] == []
+        assert any("Ciclo" in e for e in relatorio["erros"])

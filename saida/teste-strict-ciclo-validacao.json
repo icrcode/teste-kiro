@@ -1,0 +1,9 @@
+{
+  "caso": "teste-strict-ciclo",
+  "status": "invalido",
+  "erros": [
+    "Ciclo detectado nas conexões: B → A → B. Loops de feedback são válidos em pipelines ML, mas verifique se é intencional."
+  ],
+  "avisos": [],
+  "timestamp": "2026-09-24T17:09:01.046933+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "caso": "teste-conn-invalida",
+  "status": "invalido",
+  "erros": [
+    "conexoes[0]: 'origem' referencia id inexistente: 'id_que_nao_existe'"
+  ],
+  "avisos": [],
+  "timestamp": "2026-09-24T17:09:00.900291+00:00"
+}
