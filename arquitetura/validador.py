@@ -257,7 +257,9 @@ def validar(caminho_yaml: str, strict: bool = False) -> dict:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
-if __name__ == "__main__":
+
+def main() -> None:
+    """Ponto de entrada da linha de comando."""
     parser = argparse.ArgumentParser(
         description="Valida arquivos de arquitetura YAML para o modelo de previsão de matrículas."
     )
@@ -275,3 +277,7 @@ if __name__ == "__main__":
     # Exit code 1 se inválido
     if relatorio["status"] == "invalido":
         raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()
