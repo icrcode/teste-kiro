@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Validar Arquitetura ao Salvar",
+      "trigger": "PostFileSave",
+      "description": "Executa o validador automaticamente sempre que um arquivo YAML em arquiteturas/ é salvo, garantindo integridade da arquitetura.",
+      "matcher": "arquiteturas/.*\\.yaml$",
+      "action": {
+        "type": "command",
+        "command": "python arquitetura/validador.py \"$KIRO_FILE_PATH\"",
+        "timeout": 30
+      }
+    }
+  ]
+}

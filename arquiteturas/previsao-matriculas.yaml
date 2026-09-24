@@ -1,0 +1,98 @@
+# Arquitetura gerada para: previsao-matriculas
+# Gerado a partir de: casos/previsao-matriculas.yaml
+# Use este arquivo com o renderizador: python renderizador/renderizador.py arquiteturas/previsao-matriculas.yaml
+
+caso: previsao-matriculas
+descricao: Pipeline AWS completo para previsão de demanda de vagas por curso
+
+componentes:
+  - id: s3_raw
+    tipo: S3
+    nome: Bucket Raw — Dados Brutos
+    config:
+      bucket: prevmatriculas-dev-raw
+
+  - id: glue_etl
+    tipo: Glue
+    nome: ETL — Feature Engineering
+
+  - id: s3_processed
+    tipo: S3
+    nome: Bucket Processed
+
+  - id: sagemaker_feature_store
+    tipo: SageMaker
+    nome: Feature Store
+
+  - id: sagemaker_training
+    tipo: SageMaker
+    nome: Treinamento XGBoost
+
+  - id: sagemaker_endpoint
+    tipo: SageMaker
+    nome: Endpoint Inferência
+
+  - id: sagemaker_monitor
+    tipo: SageMaker
+    nome: Model Monitor
+
+  - id: lambda_preprocessor
+    tipo: Lambda
+    nome: Pré-processador
+
+  - id: cloudwatch_metrics
+    tipo: CloudWatch
+    nome: Monitoramento
+
+  - id: eventbridge_scheduler
+    tipo: EventBridge
+    nome: Agendador Retreinamento
+
+  - id: quicksight_dashboard
+    tipo: QuickSight
+    nome: Dashboard Gestores
+
+conexoes:
+  - origem: s3_raw
+    destino: glue_etl
+    descricao: dados brutos
+
+  - origem: glue_etl
+    destino: s3_processed
+    descricao: features transformadas
+
+  - origem: s3_processed
+    destino: sagemaker_feature_store
+    descricao: ingestão features
+
+  - origem: sagemaker_feature_store
+    destino: sagemaker_training
+    descricao: dataset treino
+
+  - origem: sagemaker_training
+    destino: sagemaker_endpoint
+    descricao: deploy modelo
+
+  - origem: sagemaker_endpoint
+    destino: sagemaker_monitor
+    descricao: predições monitoradas
+
+  - origem: lambda_preprocessor
+    destino: sagemaker_endpoint
+    descricao: requisições inferência
+
+  - origem: sagemaker_monitor
+    destino: cloudwatch_metrics
+    descricao: métricas drift
+
+  - origem: cloudwatch_metrics
+    destino: eventbridge_scheduler
+    descricao: alerta retreinamento
+
+  - origem: eventbridge_scheduler
+    destino: sagemaker_training
+    descricao: pipeline retreinamento
+
+  - origem: sagemaker_endpoint
+    destino: quicksight_dashboard
+    descricao: previsões visualização

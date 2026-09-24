@@ -1,0 +1,9 @@
+{
+  "caso": "desconhecido",
+  "status": "invalido",
+  "erros": [
+    "Arquivo não encontrado: C:\\Users\\icaro\\AppData\\Local\\Temp\\pytest-of-icaro\\pytest-1\\test_arquivo_inexistente0\\nao_existe.yaml"
+  ],
+  "avisos": [],
+  "timestamp": "2026-09-24T14:25:40.455050+00:00"
+}

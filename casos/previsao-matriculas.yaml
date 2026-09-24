@@ -1,0 +1,207 @@
+# Caso de Uso: Previsão de Demanda de Vagas por Curso
+# Modelo de previsão de matrículas por curso e período letivo
+
+caso: previsao-matriculas
+descricao: >
+  Modelo de Machine Learning para prever a demanda de vagas por curso em
+  instituições de ensino. Utiliza histórico de matrículas, perfil dos alunos,
+  dados socioeconômicos e calendário acadêmico para estimar a demanda futura
+  por curso e período letivo.
+
+metadata:
+  versao: "1.0.0"
+  dominio: educacao
+  responsavel: equipe-dados-academicos
+  ambiente: dev
+
+entradas:
+  - nome: historico_matriculas
+    descricao: Séries históricas de matrículas por curso e período
+    formato: CSV / Parquet
+    fonte: Sistema Acadêmico (SIA)
+    frequencia: semestral
+
+  - nome: catalogo_cursos
+    descricao: Lista de cursos, modalidades e capacidades máximas
+    formato: CSV
+    fonte: Pró-Reitoria de Graduação
+
+  - nome: perfil_alunos
+    descricao: Dados demográficos e socioeconômicos dos candidatos
+    formato: JSON / CSV
+    fonte: ENEM / Vestibular
+
+  - nome: calendario_academico
+    descricao: Datas de abertura de inscrições e períodos letivos
+    formato: JSON
+    fonte: Secretaria Acadêmica
+
+saidas:
+  - nome: previsao_vagas
+    descricao: Estimativa de matrículas por curso e período
+    formato: JSON / CSV
+    destino: Dashboard QuickSight / API REST
+
+  - nome: relatorio_confianca
+    descricao: Intervalo de confiança das previsões (90%)
+    formato: JSON
+
+features:
+  - curso_id
+  - periodo_letivo
+  - historico_demanda_3anos
+  - taxa_evasao_historica
+  - vagas_ofertadas_periodo_anterior
+  - nota_corte_enem
+  - regiao_geografica
+  - modalidade_ensino          # presencial | EAD | hibrido
+  - indice_desenvolvimento_humano_municipio
+
+modelo:
+  algoritmo: XGBoost
+  alternativas:
+    - Prophet          # para séries temporais com sazonalidade
+    - LSTM             # para padrões sequenciais complexos
+  horizonte_previsao: 2_semestres
+  metricas_avaliacao:
+    - RMSE
+    - MAE
+    - MAPE
+  threshold_retreinamento:
+    mape_maximo: 0.15  # 15% de erro percentual absoluto médio
+
+componentes:
+  - id: s3_raw
+    tipo: S3
+    nome: Bucket Raw — Dados Brutos
+    config:
+      bucket: prevmatriculas-dev-raw
+      prefixos:
+        - matriculas/
+        - cursos/
+        - alunos/
+        - calendario/
+
+  - id: glue_etl
+    tipo: Glue
+    nome: ETL — Limpeza e Transformação
+    config:
+      job_name: job-prevmatriculas-feature-engineering
+      schedule: cron(0 2 1 * ? *)  # 1º de cada mês às 02h
+
+  - id: s3_processed
+    tipo: S3
+    nome: Bucket Processed — Dados Transformados
+    config:
+      bucket: prevmatriculas-dev-processed
+      prefixos:
+        - features/
+        - treino/
+        - validacao/
+
+  - id: sagemaker_feature_store
+    tipo: SageMaker
+    nome: Feature Store — Repositório de Features
+    config:
+      feature_group: prevmatriculas-features
+
+  - id: sagemaker_training
+    tipo: SageMaker
+    nome: Treinamento do Modelo XGBoost
+    config:
+      instance_type: ml.m5.xlarge
+      framework: xgboost
+      versao: "1.7"
+
+  - id: sagemaker_endpoint
+    tipo: SageMaker
+    nome: Endpoint de Inferência em Tempo Real
+    config:
+      instance_type: ml.t3.medium
+      auto_scaling: true
+      min_instances: 1
+      max_instances: 3
+
+  - id: sagemaker_monitor
+    tipo: SageMaker
+    nome: Model Monitor — Detecção de Drift
+    config:
+      schedule: diario
+      threshold_data_drift: 0.1
+
+  - id: lambda_preprocessor
+    tipo: Lambda
+    nome: Pré-processamento de Requisições
+    config:
+      runtime: python3.12
+      timeout_segundos: 30
+      memoria_mb: 512
+
+  - id: cloudwatch_metrics
+    tipo: CloudWatch
+    nome: Monitoramento de Métricas
+    config:
+      alarmes:
+        - mape_alto
+        - endpoint_latencia
+        - drift_detectado
+
+  - id: eventbridge_scheduler
+    tipo: EventBridge
+    nome: Agendador de Retreinamento
+    config:
+      schedule: rate(180 days)  # retreina a cada semestre
+
+  - id: quicksight_dashboard
+    tipo: QuickSight
+    nome: Dashboard — Gestores Acadêmicos
+    config:
+      visualizacoes:
+        - previsao_por_curso
+        - comparativo_historico
+        - mapa_regional_demanda
+
+conexoes:
+  - origem: s3_raw
+    destino: glue_etl
+    descricao: Lê dados brutos para transformação
+
+  - origem: glue_etl
+    destino: s3_processed
+    descricao: Grava features transformadas
+
+  - origem: s3_processed
+    destino: sagemaker_feature_store
+    descricao: Ingere features no Feature Store
+
+  - origem: sagemaker_feature_store
+    destino: sagemaker_training
+    descricao: Fornece dataset de treino
+
+  - origem: sagemaker_training
+    destino: sagemaker_endpoint
+    descricao: Implanta modelo treinado
+
+  - origem: sagemaker_endpoint
+    destino: sagemaker_monitor
+    descricao: Monitora predições em produção
+
+  - origem: lambda_preprocessor
+    destino: sagemaker_endpoint
+    descricao: Envia requisições de inferência
+
+  - origem: sagemaker_monitor
+    destino: cloudwatch_metrics
+    descricao: Publica métricas de drift
+
+  - origem: cloudwatch_metrics
+    destino: eventbridge_scheduler
+    descricao: Dispara alerta de retreinamento
+
+  - origem: eventbridge_scheduler
+    destino: sagemaker_training
+    descricao: Inicia pipeline de retreinamento
+
+  - origem: sagemaker_endpoint
+    destino: quicksight_dashboard
+    descricao: Fornece previsões para visualização
