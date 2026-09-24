@@ -1,0 +1,27 @@
+digraph arquitetura {
+    rankdir=LR;
+    node [shape=box, style=filled, fillcolor="#E8F4FD"];
+    s3_raw [label="Bucket Raw — Dados Brutos\n(S3)"];
+    glue_etl [label="ETL — Feature Engineering\n(Glue)"];
+    s3_processed [label="Bucket Processed\n(S3)"];
+    sagemaker_feature_store [label="Feature Store\n(SageMaker)"];
+    sagemaker_training [label="Treinamento XGBoost\n(SageMaker)"];
+    sagemaker_endpoint [label="Endpoint Inferência\n(SageMaker)"];
+    sagemaker_monitor [label="Model Monitor\n(SageMaker)"];
+    lambda_preprocessor [label="Pré-processador\n(Lambda)"];
+    cloudwatch_metrics [label="Monitoramento\n(CloudWatch)"];
+    eventbridge_scheduler [label="Agendador Retreinamento\n(EventBridge)"];
+    quicksight_dashboard [label="Dashboard Gestores\n(QuickSight)"];
+
+    s3_raw -> glue_etl [label="dados brutos"];
+    glue_etl -> s3_processed [label="features transformadas"];
+    s3_processed -> sagemaker_feature_store [label="ingestão features"];
+    sagemaker_feature_store -> sagemaker_training [label="dataset treino"];
+    sagemaker_training -> sagemaker_endpoint [label="deploy modelo"];
+    sagemaker_endpoint -> sagemaker_monitor [label="predições monitoradas"];
+    lambda_preprocessor -> sagemaker_endpoint [label="requisições inferência"];
+    sagemaker_monitor -> cloudwatch_metrics [label="métricas drift"];
+    cloudwatch_metrics -> eventbridge_scheduler [label="alerta retreinamento"];
+    eventbridge_scheduler -> sagemaker_training [label="pipeline retreinamento"];
+    sagemaker_endpoint -> quicksight_dashboard [label="previsões visualização"];
+}
