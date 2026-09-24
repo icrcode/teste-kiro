@@ -1,0 +1,137 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "Implementar `carregar_yaml()` com tratamento de erros de parsing": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268436254
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268445569
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268698752
+      }
+    ],
+    "Implementar `validar_schema()` com checagem de campos obrigatórios": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268436570
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268705823
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268741035
+      }
+    ],
+    "Implementar `validar_componentes()` com lista de serviços AWS suportados": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268436807
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268748006
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268796517
+      }
+    ],
+    "Implementar `validar_conexoes()` com verificação de referências": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268437051
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268803598
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268932847
+      }
+    ],
+    "Implementar `gerar_relatorio()` gravando JSON em `saida/`": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268437305
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268939446
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790269001054
+      }
+    ],
+    "Criar interface CLI: `python validador.py <caminho_yaml>`": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268437537
+      },
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790269012202
+      }
+    ],
+    "Adicionar flag `--strict` para tratar avisos como erros": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268437758
+      }
+    ],
+    "Escrever testes para schema inválido": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268437986
+      }
+    ],
+    "Escrever testes para serviço AWS desconhecido": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268438230
+      }
+    ],
+    "Escrever testes para conexão com ID inexistente": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268438485
+      }
+    ],
+    "Escrever teste de arquitetura válida completa (caso previsao-matriculas)": [
+      {
+        "executionId": "cd89173e-c398-47f7-b579-2a354a0fade9",
+        "chatSessionId": "sess_14186f59-bb24-44ab-b1a6-f8c0f3c30c64",
+        "timestamp": 1790268438727
+      }
+    ]
+  }
+}

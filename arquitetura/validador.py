@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 SERVICOS_AWS_SUPORTADOS = {
     "S3", "Glue", "SageMaker", "Lambda", "RDS", "Aurora",
     "EMR", "CloudWatch", "EventBridge", "QuickSight",
-    "Athena", "Kinesis", "StepFunctions", "SNS", "SQS",
 }
 
 CAMPOS_OBRIGATORIOS_RAIZ = ["caso", "descricao", "componentes", "conexoes"]
@@ -92,13 +91,66 @@ def validar_componentes(dados: dict) -> tuple[list[str], list[str], set[str]]:
     return erros, avisos, ids
 
 
-def validar_conexoes(dados: dict, ids_validos: set[str]) -> list[str]:
-    """Verifica integridade das referências em conexoes."""
-    erros = []
+def _detectar_ciclos(conexoes: list[dict]) -> list[list[str]]:
+    """
+    Detecta ciclos no grafo dirigido formado pelas conexões.
+    Retorna uma lista de ciclos encontrados, onde cada ciclo é
+    representado pela lista de IDs que o formam (ex.: ['A', 'B', 'C', 'A']).
+    Usa DFS com coloração (branco/cinza/preto).
+    """
+    # Monta lista de adjacência
+    grafo: dict[str, list[str]] = {}
+    for conn in conexoes:
+        if not isinstance(conn, dict):
+            continue
+        origem = conn.get("origem")
+        destino = conn.get("destino")
+        if origem and destino and origem != destino:
+            grafo.setdefault(origem, []).append(destino)
+
+    ciclos: list[list[str]] = []
+    cor: dict[str, str] = {}   # 'branco' (não visitado) | 'cinza' (em progresso) | 'preto' (concluído)
+    pilha: list[str] = []
+
+    def dfs(no: str) -> None:
+        cor[no] = "cinza"
+        pilha.append(no)
+        for vizinho in grafo.get(no, []):
+            if cor.get(vizinho) == "cinza":
+                # Ciclo encontrado — extrai o caminho do ciclo a partir da pilha
+                idx = pilha.index(vizinho)
+                ciclos.append(pilha[idx:] + [vizinho])
+            elif cor.get(vizinho, "branco") == "branco":
+                dfs(vizinho)
+        pilha.pop()
+        cor[no] = "preto"
+
+    todos_nos = set(grafo.keys())
+    for destinos in grafo.values():
+        todos_nos.update(destinos)
+
+    for no in todos_nos:
+        if cor.get(no, "branco") == "branco":
+            dfs(no)
+
+    return ciclos
+
+
+def validar_conexoes(dados: dict, ids_validos: set[str]) -> tuple[list[str], list[str]]:
+    """
+    Verifica integridade das referências em conexoes e detecta ciclos.
+
+    Returns:
+        (erros, avisos) — referências inválidas são erros bloqueantes;
+        ciclos entre componentes distintos são avisos (loops de feedback
+        são padrões válidos em pipelines ML, mas merecem atenção).
+    """
+    erros: list[str] = []
+    avisos: list[str] = []
     conexoes = dados.get("conexoes", [])
 
     if not isinstance(conexoes, list):
-        return ["'conexoes' deve ser uma lista."]
+        return ["'conexoes' deve ser uma lista."], []
 
     for i, conn in enumerate(conexoes):
         prefixo = f"conexoes[{i}]"
@@ -123,7 +175,16 @@ def validar_conexoes(dados: dict, ids_validos: set[str]) -> list[str]:
         if origem and destino and origem == destino:
             erros.append(f"{prefixo}: conexão de um componente para ele mesmo ('{origem}').")
 
-    return erros
+    # Detecta loops circulares no grafo de conexões (aviso, não erro bloqueante)
+    ciclos = _detectar_ciclos(conexoes)
+    for ciclo in ciclos:
+        caminho = " → ".join(ciclo)
+        avisos.append(
+            f"Ciclo detectado nas conexões: {caminho}. "
+            "Loops de feedback são válidos em pipelines ML, mas verifique se é intencional."
+        )
+
+    return erros, avisos
 
 
 def gerar_relatorio(caso: str, erros: list[str], avisos: list[str]) -> dict:
@@ -181,7 +242,9 @@ def validar(caminho_yaml: str, strict: bool = False) -> dict:
 
     # 4. Conexões (só valida se schema/componentes estiverem OK)
     if not todos_erros:
-        todos_erros.extend(validar_conexoes(dados, ids_validos))
+        erros_conn, avisos_conn = validar_conexoes(dados, ids_validos)
+        todos_erros.extend(erros_conn)
+        todos_avisos.extend(avisos_conn)
 
     # 5. Strict mode: promove avisos a erros
     if strict:

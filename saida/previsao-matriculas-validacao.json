@@ -2,6 +2,8 @@
   "caso": "previsao-matriculas",
   "status": "valido",
   "erros": [],
-  "avisos": [],
-  "timestamp": "2026-09-24T14:32:14.392612+00:00"
+  "avisos": [
+    "Ciclo detectado nas conexões: sagemaker_training → sagemaker_endpoint → sagemaker_monitor → cloudwatch_metrics → eventbridge_scheduler → sagemaker_training. Loops de feedback são válidos em pipelines ML, mas verifique se é intencional."
+  ],
+  "timestamp": "2026-09-24T16:56:26.777264+00:00"
 }
