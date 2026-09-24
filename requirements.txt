@@ -1,0 +1,16 @@
+# Validador e renderizador de arquitetura
+pyyaml>=6.0
+
+# Geradores de slides (slides/gerar_slides.py e slides/gerar_tema.py)
+python-pptx>=1.0
+matplotlib>=3.9
+numpy>=2.0
+pillow>=11.0
+lxml>=5.0
+
+# Conteúdo via API do Claude (slides/gerar_tema.py, opcional se usar o Kiro)
+anthropic>=1.8
+pydantic>=2.11
+
+# Testes
+pytest>=8.0

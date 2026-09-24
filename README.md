@@ -14,7 +14,7 @@ Prever a demanda de vagas por curso e período letivo usando histórico de matr�
 │   │   └── guia-visual-aws.md          # Contexto AWS e padrões do projeto
 │   ├── skills/
 │   │   ├── gerador-arquitetura/        # Skill para gerar arquiteturas
-│   │   └── gerador-slides/             # Skill para gerar slides (em breve)
+│   │   └── gerador-slides/             # Skill para gerar slides SENAI
 │   ├── specs/
 │   │   └── validador-arquitetura/      # Spec do validador (req + design + tasks)
 │   └── hooks/                          # Hooks de automação
@@ -27,13 +27,20 @@ Prever a demanda de vagas por curso e período letivo usando histórico de matr�
 │   └── previsao-matriculas.yaml        # Arquitetura do caso de uso
 ├── casos/
 │   └── previsao-matriculas.yaml        # Caso de uso detalhado com features e modelo
-├── slides/                             # Apresentações geradas (gerador-slides)
+├── slides/
+│   ├── gerar_slides.py                 # Slides SENAI do caso previsão de matrículas
+│   ├── gerar_tema.py                   # Slides SENAI sobre qualquer tema (Claude/Kiro)
+│   └── assets/                         # Modelo SENAI, logos, fontes e ícones Google
 ├── tests/
 │   └── test_validador.py               # Testes do validador
 └── saida/                              # Diagramas e relatórios gerados
 ```
 
 ## Início Rápido
+
+```bash
+pip install -r requirements.txt
+```
 
 ### 1. Validar a arquitetura
 ```bash
@@ -51,9 +58,15 @@ dot -Tpng saida/previsao-matriculas.dot -o saida/previsao-matriculas.png
 
 ### 3. Rodar os testes
 ```bash
-pip install pytest pyyaml
 python -m pytest tests/ -v
 ```
+
+### 4. Gerar apresentações SENAI
+```bash
+python slides/gerar_slides.py    # caso previsão de matrículas
+python slides/gerar_tema.py      # qualquer tema, conteúdo escrito pelo Claude ou pelo Kiro
+```
+Detalhes e opções em [slides/README.md](slides/README.md).
 
 ## Modelo de ML
 
