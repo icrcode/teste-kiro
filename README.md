@@ -30,7 +30,9 @@ Prever a demanda de vagas por curso e período letivo usando histórico de matr�
 ├── slides/
 │   ├── gerar_slides.py                 # Slides SENAI do caso previsão de matrículas
 │   ├── gerar_tema.py                   # Slides SENAI sobre qualquer tema (Claude/Kiro)
+│   ├── exportar_previa.py              # Exporta slides .pptx como imagens PNG
 │   └── assets/                         # Modelo SENAI, logos, fontes e ícones Google
+├── resultado-slide/                    # Apresentações geradas (.pptx) e imagens de prévia
 ├── tests/
 │   └── test_validador.py               # Testes do validador
 └── saida/                              # Diagramas e relatórios gerados
@@ -66,7 +68,9 @@ python -m pytest tests/ -v
 python slides/gerar_slides.py    # caso previsão de matrículas
 python slides/gerar_tema.py      # qualquer tema, conteúdo escrito pelo Claude ou pelo Kiro
 ```
-Detalhes e opções em [slides/README.md](slides/README.md).
+Detalhes, opções e galeria de resultados em [slides/README.md](slides/README.md).
+
+![Visão geral da apresentação gerada para o caso previsão de matrículas](resultado-slide/previa/previsao-matriculas/grade.png)
 
 ## Modelo de ML
 
